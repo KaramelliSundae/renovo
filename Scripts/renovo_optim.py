@@ -10,6 +10,7 @@
 
 # modules
 
+# Import necessary libs
 import numpy as np
 import pandas as pd
 import sys
@@ -25,28 +26,33 @@ import argparse
 import matplotlib.pyplot as plt
 import seaborn as sns
 
+# Setup argument parser for cmdline args
 parser = argparse.ArgumentParser(description='Use this script in order to retrain the random forest model or to train a new one with your data')
 parser.add_argument('-t','--training', help='path to the training set', required=True)
 parser.add_argument('-c','--columns', help='path to the file containing the columns of interest', required=True)
 
 args = parser.parse_args()
 
+# Read training data and columns of interest
 data = pd.read_csv(args.training, sep="\t", na_values=".") 
 keep = pd.read_csv(args.columns, sep="\t")
 
+# Select the features (X) and target variable (y) from the data
 X = data[keep["Column"]]
 X = X.drop(columns="CLNSIG",axis=1)
 X = X.drop(columns=["ExonicFunc.refGene","Func.refGene"],axis=1)
-X_new = pd.get_dummies(X)
+X_new = pd.get_dummies(X) # Perform one-hot encoding on categorical variables
 y = data["CLNSIG"]
 
+# Split data into training and test sets
 X_train, X_test, label_train, label_test=train_test_split(X_new, y, train_size=0.7,random_state=100)
 
+# Initialize the Random Forest model
 rf = RandomForestClassifier(random_state=0)
 
 from pprint import pprint
 
-# Look at parameters used by our current forest
+# Look at parameters used by our current forest (and print)
 print('Parameters currently in use:\n')
 pprint(rf.get_params())
 
@@ -59,6 +65,7 @@ rf_my=RandomForestClassifier(random_state=0,min_samples_split=5)
 random_grid = {'n_estimators': n_estimators,
                'max_features': max_features
               }
+# Perform grid search with cross validation to find the best params
 
 grid_search= GridSearchCV(estimator = rf_my, param_grid = random_grid, cv = 5, verbose=2, n_jobs = -1,
               return_train_score=True)
@@ -66,7 +73,7 @@ grid_search= GridSearchCV(estimator = rf_my, param_grid = random_grid, cv = 5, v
 grid_search.fit(X_train, label_train)
 grid_search.best_params_
 
-#Evaluation function
+# Evaluation function (evaluate model's performance)
 def evaluate(model, test_features, test_labels):
     predictions = model.predict(test_features)
     accuracy = accuracy_score(test_labels, predictions)
@@ -75,12 +82,15 @@ def evaluate(model, test_features, test_labels):
 
     return accuracy
 
+# Fit the base RF model and evaluate performance of it
 rf.fit(X_train, label_train)
 base_base_accuracy = evaluate(rf, X_test, label_test)
 
+# Evaluate the performance of the best grid search model
 best_grid = grid_search.best_estimator_
 grid_accuracy = evaluate(best_grid, X_test, label_test)
 
+#Train final RF model with optimized params
 #final random forest with optimized parameters
 rf_final=RandomForestClassifier(n_estimators = 70, min_samples_split=5,max_features=8,random_state = 0)
 rf_final.fit(X_new,y)

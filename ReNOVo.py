@@ -8,19 +8,19 @@
 # Users need to obtain the ANNOVAR licence by themselves.
 # Contact the Authors for commercial use.
 
-# modules
+# Import necessary modules
 import subprocess as sp
 import sys, os, argparse, tempfile, shutil
 from os.path import isfile, join
 
-
+# Function to check if a given path is a directory
 def dir_path(string):
     if os.path.isdir(string):
         return string
     else:
         raise NotADirectoryError(string)
 
-
+# Use argument parser and define expected arguments
 parser = argparse.ArgumentParser(
     description="Given as input a folder containing the VCF or annovar input (AVinput) files, this program applies the Random Forest model of ReNOVo and returns the tabular annovar like files with the classification provided by the model itself."
 )
@@ -53,6 +53,7 @@ parser.add_argument(
     help="the reference genome build (hg19 or hg38), default is hg19",
 )
 
+# Parse arguments
 parser.add_argument(
     "-c",
     "--clinvar",
@@ -70,16 +71,16 @@ if args.database is None:
 
 scripts_folder = f"{os.path.dirname(__file__)}Scripts/"
 
-# temporary folder creation
+# temporary folder creation (if it doesn't exist)
 if not os.path.exists(args.path + "/temporary"):
     os.mkdir(args.path + "/temporary")
 
-# output dir creation
+# output dir creation (if it doesn't exist)
 
 if not os.path.exists(args.path + "/ReNOVo_output"):
     os.mkdir(args.path + "/ReNOVo_output")
 
-# Get file list
+# Get file list (within the input dir)
 onlyfiles = [f for f in os.listdir(args.path) if isfile(join(args.path, f))]
 
 welcomeMessage = """=============================================================================
@@ -107,7 +108,7 @@ print(welcomeMessage)
 
 print("Cheking all ANNOVAR datasets...")
 
-# change this string to upgrade ANNOVAR datasets
+#** change this string to upgrade ANNOVAR datasets
 dbs = [
     "refGene",
     "ensGene",
@@ -117,7 +118,7 @@ dbs = [
     "intervar_20180118",
     args.clinvar,
 ]
-
+# Try to download missing ANNOVAR datasets
 try:
     onlyfiles_annovar = [
         f for f in os.listdir(args.database) if isfile(join(args.database, f))
@@ -125,7 +126,7 @@ try:
     for db in dbs:
         db_str = args.build + "_" + db + ".txt"
         if db_str not in onlyfiles_annovar:
-            # download
+            # If dataset isn't found, download
             command = (
                 "perl "
                 + args.annovar
@@ -144,11 +145,11 @@ except IOError:
     print("Error: Annovar path is probably wrong: " + args.annovar)
     sys.exit()
 
-# Run commands for each file
+# Run commands for each file in the input directory
 for file_name in onlyfiles:
     command = ""
 
-    # change the commands below to upgrade the ANNOVAR datasets
+    #** change the commands below to upgrade the ANNOVAR datasets
 
     if "vcf" in file_name[-3:]:  # check vcf input or AV
         command = (
@@ -169,7 +170,7 @@ for file_name in onlyfiles:
             + " --protocol refGene,ensGene,avsnp150,gnomad211_exome,dbnsfp35c,intervar_20180118,clinvar_20200316 --remove --operation g,g,f,f,f,f,f --nastring . --vcfinput"
         )
         print("VCF file! Launching ANNOVAR!\n")
-    elif "avinput" in file_name:
+    elif "avinput" in file_name: # check if input is an AV file
         command = (
             "perl "
             + args.annovar
@@ -188,7 +189,7 @@ for file_name in onlyfiles:
             + " --protocol refGene,ensGene,avsnp150,gnomad211_exome,dbnsfp35c,intervar_20180118,clinvar_20200316 --remove --operation g,g,f,f,f,f,f --nastring ."
         )
         print("avinput file! Launching ANNOVAR!\n")
-    else:
+    else: #skip files if they are not vcf/av input
         print(file_name + " is not a VCF or av input... skipped...")
         continue
 
@@ -250,7 +251,7 @@ for file_name in onlyfiles:
     process.wait()
     print("DONE!\n")
 
-    # output
+    # output msg
     print("Output generated! in " + output_file_name + "\n")
 
 # remove temporary directory (and all its content)
