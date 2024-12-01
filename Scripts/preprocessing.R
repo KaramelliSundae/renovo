@@ -1,4 +1,4 @@
-#!/path/to/your/env/bin/Rscript <-- CHANGE WITH YOUR INTERPRETER!
+#!~/.conda/envs/renovo/bin/R
 #### fix the dataset, with median to reconstruct the NA
 
 # get directory of the script

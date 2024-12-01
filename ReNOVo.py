@@ -200,6 +200,9 @@ for file_name in onlyfiles:
     process.wait()
 
     # Running preprocessing.R!
+    # Define scripts folder as full dir as we're going to use all scripts, obv this PATH needs to be changed according to your renovo/Scripts folder location
+    
+    scripts_folder = "/home/dae/Documents/ML/renovo/Scripts/"
 
     print("Preprocessing... NA imputation and columns names changing... ")
     path_to_an_out = (
